@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Aurora Nexus | 통합 업무 포탈 (듀얼 코어 워크스페이스)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-deep: #050914;
+            --surface-glass: rgba(8, 12, 25, 0.75);
+            --border-glow: rgba(56, 189, 248, 0.3);
+            --accent-blue: #3b82f6;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+            --card-shadow: 0 25px 40px -15px rgba(0, 0, 0, 0.8);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --border-light: rgba(255, 255, 255, 0.1);
+            --treemap-blue: linear-gradient(135deg, #2563eb, #1e3a8a);
+            --treemap-emerald: linear-gradient(135deg, #059669, #064e3b);
+            --treemap-amber: linear-gradient(135deg, #d97706, #92400e);
+            --treemap-purple: linear-gradient(135deg, #7c3aed, #4c1d95);
+        }
+
+        body.light-mode {
+            --bg-deep: #f3f4f8;
+            --surface-glass: rgba(255, 255, 255, 0.9);
+            --border-glow: rgba(59,130,246,0.25);
+            --card-shadow: 0 15px 35px -12px rgba(0, 0, 0, 0.08);
+            --text-primary: #0f172a;
+            --text-secondary: #334155;
+            --input-bg: rgba(0, 0, 0, 0.02);
+            --border-light: rgba(0, 0, 0, 0.1);
+            --treemap-blue: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            --treemap-emerald: linear-gradient(135deg, #10b981, #047857);
+            --treemap-amber: linear-gradient(135deg, #f59e0b, #b45309);
+            --treemap-purple: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        }
+
+        body.soft-mode {
+            --bg-deep: #1a1e2c;
+            --surface-glass: rgba(30, 35, 55, 0.85);
+            --border-glow: rgba(139, 92, 246, 0.4);
+            --card-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.4);
+            --text-primary: #e2e8f0;
+            --text-secondary: #b9c3db;
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --border-light: rgba(255, 255, 255, 0.08);
+            --treemap-blue: linear-gradient(135deg, #4f46e5, #312e81);
+            --treemap-emerald: linear-gradient(135deg, #10b981, #065f46);
+            --treemap-amber: linear-gradient(135deg, #fbbf24, #b45309);
+            --treemap-purple: linear-gradient(135deg, #c084fc, #7e22ce);
+        }
+
+        body {
+            background: var(--bg-deep);
+            font-family: 'Inter', 'Pretendard', sans-serif;
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.25s ease, color 0.2s ease;
+            background-image: radial-gradient(circle at 10% 20%, rgba(59,130,246,0.15) 0%, transparent 50%),
+                              radial-gradient(circle at 90% 80%, rgba(16,185,129,0.12) 0%, transparent 55%);
+        }
+
+        .glass-panel {
+            background: var(--surface-glass);
+            backdrop-filter: blur(16px) saturate(200%);
+            border: 1px solid var(--border-light);
+            border-radius: 32px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.2s ease;
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.6); border-radius: 8px; }
+
+        /* KPI 트리맵 카드 */
+        .kpi-treemap-grid {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+        .treemap-card {
+            border-radius: 28px;
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 8px 20px -8px rgba(0,0,0,0.4);
+        }
+        .treemap-card:hover { transform: translateY(-4px); filter: brightness(1.02); }
+        .treemap-blue { background: var(--treemap-blue); }
+        .treemap-emerald { background: var(--treemap-emerald); }
+        .treemap-amber { background: var(--treemap-amber); }
+        .treemap-purple { background: var(--treemap-purple); }
+        .kpi-value-large { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; }
+        .mini-progress { height: 8px; background: rgba(0,0,0,0.3); border-radius: 12px; overflow: hidden; }
+        .mini-progress-fill { width: 0%; height: 100%; border-radius: 12px; transition: width 0.6s cubic-bezier(0.22,0.97,0.36,1); background: rgba(255,255,255,0.8); }
+        .badge-glow { background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); border-radius: 40px; padding: 4px 12px; font-size: 12px; font-weight: 500; display: inline-block; }
+        .gold-bling { animation: goldPulse 0.7s ease-in-out 2; }
+        @keyframes goldPulse { 0%{filter:drop-shadow(0 0 0 rgba(245,158,11,0));} 50%{filter:drop-shadow(0 0 18px rgba(245,158,11,0.8)); transform:scale(1.01);} 100%{filter:drop-shadow(0 0 0 rgba(245,158,11,0));} }
+        
+        /* 달력 + 노트 */
+        .cal-date { transition: all 0.1s ease; font-weight: 500; cursor: pointer; }
+        .cal-date.selected-date { background: linear-gradient(135deg, #4f46e5, #7c3aed) !important; color: white; box-shadow: 0 4px 12px -3px rgba(99,102,241,0.5); border-color: transparent; }
+        .rich-editor:focus { outline: none; border-left: 3px solid var(--accent-blue); padding-left: 12px; }
+        .tag-chip { display: inline-block; background: rgba(79,70,229,0.2); padding: 2px 10px; border-radius: 30px; font-size: 11px; margin-right: 6px; cursor: pointer; transition: 0.1s; border: 1px solid #4f46e5; }
+        .tag-chip:hover { background: #4f46e5; color: white; }
+        .checkbox-custom { width: 1.2rem; height: 1.2rem; border-radius: 8px; accent-color: #3b82f6; cursor: pointer; }
+
+        /* 오늘의 미션 */
+        .mission-panel { max-height: 280px; overflow-y: auto; }
+        .todo-item { background: rgba(255,255,255,0.04); border-radius: 20px; padding: 10px 12px; transition: all 0.2s; margin-bottom: 8px; }
+        .todo-item.done .todo-text { text-decoration: line-through; opacity: 0.6; }
+
+        .toast-notify { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); border-radius: 40px; padding: 10px 24px; font-size: 13px; color: white; z-index: 1000; transition: opacity 0.2s; white-space: nowrap; border: 1px solid rgba(255,255,255,0.2); pointer-events: none; font-weight: 500; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px); z-index: 2000; display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; transition: all 0.2s ease; }
+        .modal.active { visibility: visible; opacity: 1; }
+        .modal-content { width: 85%; height: 85%; background: #0f1222; border-radius: 36px; border: 1px solid rgba(255,255,255,0.2); display: flex; flex-direction: column; overflow: hidden; }
+        .rec-led { animation: pulseRed 1.2s infinite; }
+        @keyframes pulseRed { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+    </style>
+</head>
+<body class="h-screen flex flex-col p-5 gap-4 overflow-hidden">
+
+<div class="flex flex-1 gap-5 overflow-hidden">
+    <div class="w-[36%] min-w-[340px] flex flex-col gap-5 overflow-y-auto custom-scroll">
+        <div class="glass-panel p-5">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-calendar-alt text-indigo-400 text-xl"></i>
+                    <h3 id="calendar-month-year" class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-300 to-purple-300 bg-clip-text text-transparent">2026.05</h3>
+                </div>
+                <div class="flex gap-2">
+                    <button id="prev-month-btn" class="w-8 h-8 rounded-full hover:bg-indigo-600/40"><i class="fas fa-chevron-left text-sm"></i></button>
+                    <button id="next-month-btn" class="w-8 h-8 rounded-full hover:bg-indigo-600/40"><i class="fas fa-chevron-right text-sm"></i></button>
+                </div>
+            </div>
+            <div class="grid grid-cols-7 gap-2 text-center text-xs font-semibold mb-3">
+                <div class="text-rose-400">SUN</div><div class="text-gray-300">MON</div><div class="text-gray-300">TUE</div><div class="text-gray-300">WED</div><div class="text-gray-300">THU</div><div class="text-gray-300">FRI</div><div class="text-indigo-400">SAT</div>
+            </div>
+            <div id="calendar-days-grid" class="grid grid-cols-7 gap-2 text-sm"></div>
+        </div>
+        
+        <div class="glass-panel flex-1 flex flex-col overflow-hidden">
+            <div class="px-5 py-3 border-b border-white/10 flex justify-between items-center">
+                <div class="flex items-center gap-2"><i class="fas fa-thumbtack text-amber-400 text-xs rotate-45"></i><span id="pinned-memo-text" class="text-xs font-medium">📌 일간 전략 노트</span></div>
+                <div class="flex gap-2"><span id="memo-save-status" class="text-[9px] px-2 py-1 bg-white/5 rounded-full text-emerald-300">✔️ 동기화됨</span><span id="word-count-display" class="text-[9px] bg-black/30 px-2 py-1 rounded-full">0 단어</span></div>
+            </div>
+            <div class="px-5 py-2 flex justify-between border-b border-white/10 flex-wrap gap-2">
+                <div class="flex items-center gap-3">
+                    <button id="prev-day-btn" class="text-gray-400 hover:text-indigo-300"><i class="fas fa-chevron-left"></i></button>
+                    <h2 id="selected-date-title" class="text-xl font-extrabold">2026.05.03</h2>
+                    <button id="next-day-btn" class="text-gray-400 hover:text-indigo-300"><i class="fas fa-chevron-right"></i></button>
+                    <button id="today-btn" class="text-[10px] bg-indigo-600/50 px-3 py-1 rounded-full">오늘</button>
+                </div>
+                <div class="flex gap-2">
+                    <button class="note-tool-btn text-xs bg-white/10 px-2 py-1 rounded-full" data-cmd="bold"><i class="fas fa-bold"></i></button>
+                    <button class="note-tool-btn text-xs bg-white/10 px-2 py-1 rounded-full" data-cmd="italic"><i class="fas fa-italic"></i></button>
+                    <button id="insert-tag-quick" class="note-tool-btn text-xs bg-white/10 px-2 py-1 rounded-full"><i class="fas fa-hashtag"></i></button>
+                    <button id="insert-template" class="note-tool-btn text-xs bg-white/10 px-2 py-1 rounded-full"><i class="fas fa-file-alt"></i></button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5 custom-scroll">
+                <div id="rich-editor" class="rich-editor min-h-[200px] leading-relaxed text-sm focus:outline-none" contenteditable="true" style="color: var(--text-primary);">
+                </div>
+                <div class="flex flex-wrap gap-2 mt-3 pt-2 border-t border-white/10">
+                    <span class="text-[9px] text-indigo-300"><i class="fas fa-tags"></i> 퀵 태그:</span>
+                    <span class="tag-chip" data-tag="#전략">#전략</span>
+                    <span class="tag-chip" data-tag="#KPI">#KPI</span>
+                    <span class="tag-chip" data-tag="#회의록">#회의록</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col gap-5 overflow-y-auto custom-scroll">
+        <div class="glass-panel p-5">
+            <div class="flex justify-between items-center flex-wrap gap-2 mb-3">
+                <div><h3 class="font-bold text-xl">🎯 KPI 트리맵 대시보드</h3><p class="text-xs text-secondary">실시간 성과 지표 · 목표 대비 달성률</p></div>
+                <div class="text-right bg-black/20 px-4 py-2 rounded-2xl"><div class="text-3xl font-black" id="total-kpi-percent">0%</div><div class="text-[10px] text-gray-300">전체 달성률</div></div>
+            </div>
+            <div class="kpi-treemap-grid">
+                <div class="treemap-card treemap-blue" data-metric="contract" style="grid-row: span 2;">
+                    <div><span class="badge-glow">📄 계약 완료</span><i class="fas fa-chart-simple float-right text-2xl opacity-70"></i></div>
+                    <div class="mt-3"><span class="kpi-value-large"><span class="kpi-current">0</span></span><span class="text-xl opacity-80">/<span class="kpi-target">5</span></span></div>
+                    <div class="mt-1 flex justify-between"><span class="text-sm font-bold kpi-percent">0%</span><span class="text-xs">#계약</span></div>
+                    <div class="mini-progress mt-2"><div class="mini-progress-fill" style="width:0%"></div></div>
+                </div>
+                <div class="treemap-card treemap-emerald" data-metric="counseling">
+                    <div><span class="badge-glow">💬 상담 진행</span></div>
+                    <div class="mt-2 text-3xl font-black"><span class="kpi-current">0</span><span class="text-base">/<span class="kpi-target">8</span></span></div>
+                    <div class="mini-progress mt-1"><div class="mini-progress-fill"></div></div><div class="text-right text-sm font-bold kpi-percent mt-1">0%</div>
+                </div>
+                <div class="treemap-card treemap-amber" data-metric="training">
+                    <div><span class="badge-glow">🎓 교육 이수</span></div>
+                    <div class="mt-2 text-3xl font-black"><span class="kpi-current">0</span><span class="text-base">/<span class="kpi-target">3</span></span></div>
+                    <div class="mini-progress mt-1"><div class="mini-progress-fill"></div></div><div class="text-right text-sm font-bold kpi-percent mt-1">0%</div>
+                </div>
+                <div class="treemap-card treemap-purple" data-metric="retention">
+                    <div><span class="badge-glow">⭐ 고객 유지</span></div>
+                    <div class="mt-2 text-3xl font-black"><span class="kpi-current">0</span><span class="text-base">/<span class="kpi-target">4</span></span></div>
+                    <div class="mini-progress mt-1"><div class="mini-progress-fill"></div></div><div class="text-right text-sm font-bold kpi-percent mt-1">0%</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-4 gap-3 mt-2">
+                <div class="text-center p-2 bg-white/5 rounded-2xl"><div class="text-xl font-bold" id="contract-count">0</div><div class="text-[10px]">계약 성과</div></div>
+                <div class="text-center p-2 bg-white/5 rounded-2xl"><div class="text-xl font-bold" id="counseling-count">0</div><div class="text-[10px]">상담 완료</div></div>
+                <div class="text-center p-2 bg-white/5 rounded-2xl"><div class="text-xl font-bold" id="training-count">0</div><div class="text-[10px]">교육 이수</div></div>
+                <div class="text-center p-2 bg-white/5 rounded-2xl"><div class="text-xl font-bold" id="retention-count">0</div><div class="text-[10px]">유지 고객</div></div>
+            </div>
+            <div class="mt-4 flex justify-end"><button id="open-report-btn" class="bg-indigo-600 hover:bg-indigo-500 px-5 py-2 rounded-full text-sm font-semibold shadow-lg transition"><i class="fas fa-chart-line mr-1"></i>성과 보고서 (PDF/인쇄)</button></div>
+        </div>
+
+        <div class="glass-panel p-5">
+            <div class="flex justify-between items-center mb-3"><h3 class="font-bold"><i class="far fa-check-circle mr-2 text-emerald-400"></i> 오늘의 미션 (중앙 워크플로우)</h3><button id="add-todo-quick" class="text-xs bg-white/10 px-3 py-1 rounded-full">+ 새 할일</button></div>
+            <div id="central-todo-list" class="mission-panel space-y-2 max-h-56 overflow-y-auto custom-scroll"></div>
+        </div>
+        
+        <div class="glass-panel p-3 flex justify-between items-center text-xs"><span><i class="fas fa-history text-indigo-400"></i> 최근 액티비티</span><span id="last-activity-log" class="text-gray-400">· 시스템 동기화 완료</span><button id="clear-log-central" class="text-[10px] bg-white/5 px-2 py-0.5 rounded-full">초기화</button></div>
+    </div>
+
+    <div class="w-[340px] flex flex-col gap-5 overflow-y-auto custom-scroll">
+        <div class="glass-panel p-4">
+            <div class="flex items-center gap-2 mb-3"><i class="fas fa-video text-rose-400"></i><h3 class="font-bold text-sm">🎥 화면 녹화 (실제 작동)</h3></div>
+            <div class="rec-preview aspect-video bg-black/50 rounded-xl flex items-center justify-center"><div class="text-center"><div id="rec-led" class="w-3 h-3 bg-rose-500 rounded-full mx-auto mb-2 opacity-50"></div><div class="text-xs text-gray-400" id="rec-status-text">녹화 대기중</div><div class="text-xs font-mono mt-1" id="rec-time">00:00:00</div></div></div>
+            <div class="rec-controls flex justify-center gap-3 mt-3"><button id="rec-start" class="bg-rose-500/80 hover:bg-rose-500 px-4 py-1.5 rounded-full text-xs"><i class="fas fa-circle"></i> 녹화</button><button id="rec-stop" class="bg-gray-600/50 hover:bg-gray-600 px-4 py-1.5 rounded-full text-xs" disabled><i class="fas fa-stop"></i> 중지</button></div>
+        </div>
+        <div class="glass-panel p-4">
+            <div class="flex items-center gap-3 mb-4"><div class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 animate-spin" style="animation-duration: 4s;"></div><div><div class="font-bold text-sm">Lofi Aurora</div><div class="text-[10px] text-gray-400">집중 재생목록</div></div><button id="mp3-play-toggle" class="ml-auto w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center"><i class="fas fa-play text-xs"></i></button></div>
+            <div class="border-t pt-3 border-white/10"><div class="text-xs font-semibold mb-2"><i class="fas fa-globe"></i> 사이트 바로가기</div><div class="grid grid-cols-4 gap-2"><div class="site-item aspect-square bg-white/5 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-indigo-500/30" data-url="https://www.figma.com"><i class="fab fa-figma text-xl text-pink-400"></i><span class="text-[9px] mt-1">Figma</span></div><div class="site-item aspect-square bg-white/5 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-indigo-500/30" data-url="https://slack.com"><i class="fab fa-slack text-xl text-emerald-400"></i><span class="text-[9px] mt-1">Slack</span></div><div class="site-item aspect-square bg-white/5 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-indigo-500/30" data-url="https://github.com"><i class="fab fa-github text-xl"></i><span class="text-[9px] mt-1">GitHub</span></div><div class="site-item aspect-square bg-white/5 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-indigo-500/30" data-url="https://www.notion.so"><i class="fas fa-globe text-xl text-indigo-300"></i><span class="text-[9px] mt-1">Notion</span></div></div></div>
+        </div>
+        <div class="glass-panel p-4 flex justify-between items-center"><span class="text-sm font-bold">🎨 테마 모드</span><div class="flex gap-2"><button id="theme-light-btn" class="text-xs px-3 py-1 rounded-full bg-white/10 hover:bg-white/20">☀️</button><button id="theme-soft-btn" class="text-xs px-3 py-1 rounded-full bg-white/10 hover:bg-white/20">🌙</button><button id="theme-dark-btn" class="text-xs px-3 py-1 rounded-full bg-indigo-600/70 hover:bg-indigo-600">🌌</button></div></div>
+    </div>
+</div>
+
+<div id="reportModal" class="modal"><div class="modal-content"><div class="modal-header p-4 flex justify-between bg-black/50 border-b border-white/10"><span class="text-white font-bold">📈 실시간 성과 보고서</span><button id="closeReportModal" class="text-white text-2xl hover:text-rose-400">&times;</button></div><div id="reportContent" class="flex-1 p-6 overflow-y-auto bg-white/5"><div id="reportDynamic" class="text-sm text-gray-200"></div><div class="mt-6 flex gap-4"><button id="printReportBtn" class="bg-indigo-600 hover:bg-indigo-500 px-5 py-2 rounded-full text-sm font-semibold transition"><i class="fas fa-print mr-1"></i> 인쇄 / PDF 저장</button></div></div></div></div>
+
+<div id="toast-message" class="toast-notify opacity-0"></div>
+
+<script>
+// ================================
+// 1. 전역 스토어
+// ================================
+const AppStore = (function(){
+    let todos = [];
+    const defaultTodos = [
+        { id: '1', text: '계약서 작성 및 검토 #계약', completed: false, tags: '#계약' },
+        { id: '2', text: '신규 고객 상담 진행 #상담', completed: true, tags: '#상담' },
+        { id: '3', text: '교육 자료 제출 #교육', completed: false, tags: '#교육' },
+        { id: '4', text: '계약 만기 리뷰 #계약', completed: false, tags: '#계약' },
+        { id: '5', text: '상담 후속 조치 #상담', completed: true, tags: '#상담' },
+        { id: '6', text: 'VIP 고객 유지 활동 #유지', completed: false, tags: '#유지' }
+    ];
+    const kpiMap = {
+        contract: { tag: '#계약', target: 5, current: 0 },
+        counseling: { tag: '#상담', target: 8, current: 0 },
+        training: { tag: '#교육', target: 3, current: 0 },
+        retention: { tag: '#유지', target: 4, current: 0 }
+    };
+    const subscribers = [];
+
+    function updateKPIs() {
+        for(let key in kpiMap) {
+            const tag = kpiMap[key].tag;
+            kpiMap[key].current = todos.filter(t => t.completed && t.text.includes(tag)).length;
+        }
+        notify();
+    }
+    function notify() { subscribers.forEach(cb => cb({ kpiMetrics: kpiMap, todos })); }
+    function saveToLocal() { localStorage.setItem('nexus_todos', JSON.stringify(todos)); }
+    function loadLocal() { 
+        const saved = localStorage.getItem('nexus_todos'); 
+        if(saved) { todos = JSON.parse(saved); } 
+        else { todos = [...defaultTodos]; saveToLocal(); }
+        updateKPIs(); 
+    }
+
+    return {
+        getTodos: () => todos,
+        addTodo: (text) => { todos.push({ id: Date.now().toString(), text, completed: false, tags: text.match(/#[^\s]+/g)?.[0] || '' }); updateKPIs(); saveToLocal(); notify(); },
+        toggleTodo: (id) => { const t = todos.find(t=>t.id===id); if(t){ t.completed = !t.completed; updateKPIs(); saveToLocal(); notify(); } },
+        subscribe: (fn) => subscribers.push(fn),
+        init: () => { loadLocal(); },
+        getKPI: () => kpiMap
+    };
+})();
+
+// 공용 UI
+function renderGlobalUI(state) {
+    const kpis = state.kpiMetrics;
+    for(let [key, metric] of Object.entries(kpis)) {
+        const card = document.querySelector(`.treemap-card[data-metric="${key}"]`);
+        if(card){
+            const percent = metric.target===0?0:Math.min(100, Math.floor((metric.current/metric.target)*100));
+            card.querySelector('.kpi-current').innerText = metric.current;
+            card.querySelector('.kpi-target').innerText = metric.target;
+            card.querySelector('.kpi-percent').innerText = `${percent}%`;
+            const fill = card.querySelector('.mini-progress-fill');
+            if(fill) fill.style.width = `${percent}%`;
+            if(percent>=100 && metric.current > 0) {
+                card.classList.add('gold-bling');
+                setTimeout(()=>card.classList.remove('gold-bling'),1000);
+            }
+        }
+    }
+    document.getElementById('contract-count').innerText = kpis.contract.current;
+    document.getElementById('counseling-count').innerText = kpis.counseling.current;
+    document.getElementById('training-count').innerText = kpis.training.current;
+    document.getElementById('retention-count').innerText = kpis.retention.current;
+    
+    let totalCurr = kpis.contract.current + kpis.counseling.current + kpis.training.current + kpis.retention.current;
+    let totalTarget = kpis.contract.target + kpis.counseling.target + kpis.training.target + kpis.retention.target;
+    let totalPercent = totalTarget===0?0:Math.min(100, Math.floor((totalCurr/totalTarget)*100));
+    document.getElementById('total-kpi-percent').innerText = `${totalPercent}%`;
+
+    const container = document.getElementById('central-todo-list');
+    if(container){
+        const todoList = state.todos;
+        container.innerHTML = todoList.map(todo => `<div class="todo-item ${todo.completed?'done':''}" data-id="${todo.id}"><div class="flex items-center gap-3"><input type="checkbox" class="todo-checkbox w-4 h-4 accent-indigo-500 rounded" ${todo.completed?'checked':''}><span class="todo-text text-sm flex-1">${escapeHtml(todo.text)}</span><span class="text-[10px] font-semibold text-indigo-300 bg-indigo-900/30 px-2 py-0.5 rounded-full">${todo.tags||''}</span></div></div>`).join('');
+        document.querySelectorAll('.todo-checkbox').forEach((cb,idx)=>{
+            cb.addEventListener('change',()=>{ AppStore.toggleTodo(todoList[idx].id); showToast(todoList[idx].completed?'✅ 완료 취소':'✅ 미션 완료!'); });
+        });
+    }
+}
+function escapeHtml(str) { return String(str).replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+function showToast(msg){ const t=document.getElementById('toast-message'); t.innerText=msg; t.classList.remove('opacity-0'); t.classList.add('opacity-100'); setTimeout(()=>{t.classList.add('opacity-0'); t.classList.remove('opacity-100');},2500); }
+
+// ======== 달력 & 스마트 노트 ========
+let selectedYear = new Date().getFullYear(), selectedMonth = new Date().getMonth(), selectedDay = new Date().getDate();
+let memoStore = JSON.parse(localStorage.getItem('nexus_memos')) || {};
+function getDateKey(y,m,d){ return `${y}-${m+1}-${d}`; }
+function loadMemoForDate(){ 
+    let key=getDateKey(selectedYear,selectedMonth,selectedDay); 
+    let html=memoStore[key]||`<h2 class="text-2xl font-bold mb-2">📌 ${selectedYear}.${selectedMonth+1}.${selectedDay} 기록</h2><p><br></p>`; 
+    document.getElementById('rich-editor').innerHTML=html; 
+    updateWordCount(); 
+}
+function saveCurrentMemo(){ 
+    let key=getDateKey(selectedYear,selectedMonth,selectedDay); 
+    memoStore[key]=document.getElementById('rich-editor').innerHTML; 
+    localStorage.setItem('nexus_memos',JSON.stringify(memoStore)); 
+    const status = document.getElementById('memo-save-status');
+    status.innerHTML='💾 저장됨'; 
+    status.classList.replace('text-emerald-300', 'text-amber-300');
+    setTimeout(()=>{
+        status.innerHTML='✔️ 동기화됨';
+        status.classList.replace('text-amber-300', 'text-emerald-300');
+    }, 1200); 
+    updateWordCount(); 
+}
+function updateWordCount(){ let text=document.getElementById('rich-editor').innerText; let cnt=text.trim().split(/\s+/).filter(w=>w.length).length; document.getElementById('word-count-display').innerText=`${cnt} 단어`; }
+function renderCalendar(){
+    let firstDay=new Date(selectedYear,selectedMonth,1).getDay(); let days=new Date(selectedYear,selectedMonth+1,0).getDate();
+    let grid=document.getElementById('calendar-days-grid'); grid.innerHTML='';
+    for(let i=0;i<firstDay;i++) grid.appendChild(document.createElement('div'));
+    for(let d=1;d<=days;d++){
+        let cell=document.createElement('div'); 
+        let isToday = (selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth() && d === new Date().getDate());
+        let isSelected = (selectedDay === d);
+        
+        cell.className=`cal-date rounded-xl flex items-center justify-center cursor-pointer hover:bg-white/10 border border-transparent py-2 text-sm ${isSelected ? 'selected-date' : ''} ${isToday && !isSelected ? 'text-indigo-400 font-extrabold' : ''}`; 
+        cell.innerText=d;
+        cell.addEventListener('click',()=>selectDate(selectedYear,selectedMonth,d));
+        grid.appendChild(cell);
+    }
+    document.getElementById('calendar-month-year').innerHTML=`${selectedYear}.${(selectedMonth+1).toString().padStart(2,'0')}`;
+}
+function selectDate(y,m,d){ selectedYear=y; selectedMonth=m; selectedDay=d; renderCalendar(); document.getElementById('selected-date-title').innerHTML=`${y}.${(m+1).toString().padStart(2,'0')}.${d.toString().padStart(2,'0')}`; loadMemoForDate(); }
+function changeMonth(delta){ let nm=selectedMonth+delta; let ny=selectedYear; if(nm<0){ny--;nm=11;} if(nm>11){ny++;nm=0;} selectedYear=ny; selectedMonth=nm; if(selectedDay>new Date(selectedYear,selectedMonth+1,0).getDate()) selectedDay=1; selectDate(selectedYear,selectedMonth,selectedDay); }
+function goToday(){ let t=new Date(); selectDate(t.getFullYear(),t.getMonth(),t.getDate()); }
+function shiftDay(offset){ let nd=new Date(selectedYear,selectedMonth,selectedDay+offset); selectDate(nd.getFullYear(),nd.getMonth(),nd.getDate()); }
+
+// ======== 미디어 & 테마 ========
+let recInterval=null, recSeconds=0; 
+let mediaRecorder = null;
+let recordedChunks = [];
+let recStream = null;
+
+const updateRecDisplay=()=>{ document.getElementById('rec-time').innerText=new Date(recSeconds*1000).toISOString().substr(11,8); };
+
+document.getElementById('rec-start')?.addEventListener('click', async ()=>{ 
+    try {
+        recStream = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: "browser" }, audio: true });
+        mediaRecorder = new MediaRecorder(recStream);
+        recordedChunks = [];
+
+        mediaRecorder.ondataavailable = (e) => { if(e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); 
+            a.style.display = 'none';
+            a.href = url; 
+            a.download = `nexus_record_${new Date().getTime()}.webm`; 
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 150);
+        };
+
+        mediaRecorder.start();
+
+        if(recInterval) clearInterval(recInterval); 
+        recSeconds=0; updateRecDisplay(); 
+        recInterval=setInterval(()=>{ recSeconds++; updateRecDisplay(); },1000); 
+        
+        document.getElementById('rec-start').disabled=true; 
+        document.getElementById('rec-stop').disabled=false; 
+        document.getElementById('rec-led').classList.add('rec-led', 'opacity-100');
+        document.getElementById('rec-status-text').innerText = '녹화 진행 중...';
+        showToast('🎥 화면 녹화가 시작되었습니다.'); 
+
+        recStream.getVideoTracks()[0].onended = () => {
+            document.getElementById('rec-stop').click();
+        };
+
+    } catch(err) {
+        console.error("녹화 취소/에러: ", err);
+        showToast('⚠️ 화면 녹화가 취소되었습니다.');
+    }
+});
+
+document.getElementById('rec-stop')?.addEventListener('click',()=>{ 
+    if(mediaRecorder && mediaRecorder.state !== 'inactive') { mediaRecorder.stop(); }
+    if(recStream) { recStream.getTracks().forEach(track => track.stop()); }
+    if(recInterval){clearInterval(recInterval); recInterval=null;} 
+    
+    document.getElementById('rec-start').disabled=false; 
+    document.getElementById('rec-stop').disabled=true; 
+    document.getElementById('rec-led').classList.remove('rec-led', 'opacity-100');
+    document.getElementById('rec-status-text').innerText = '녹화 대기중';
+    showToast('⏹️ 녹화가 중지되고 파일이 저장되었습니다.'); 
+});
+
+let isPlaying=false; document.getElementById('mp3-play-toggle')?.addEventListener('click',()=>{ isPlaying=!isPlaying; document.getElementById('mp3-play-toggle').innerHTML=isPlaying?'<i class="fas fa-pause text-xs"></i>':'<i class="fas fa-play text-xs"></i>'; showToast(isPlaying?'🎵 집중 플레이리스트 재생 중':'⏸️ 재생 일시정지'); });
+function setTheme(mode){ document.body.classList.remove('light-mode','soft-mode'); if(mode==='light') document.body.classList.add('light-mode'); if(mode==='soft') document.body.classList.add('soft-mode'); localStorage.setItem('nexus_theme',mode); }
+document.getElementById('theme-light-btn')?.addEventListener('click',()=>setTheme('light')); document.getElementById('theme-soft-btn')?.addEventListener('click',()=>setTheme('soft')); document.getElementById('theme-dark-btn')?.addEventListener('click',()=>setTheme('dark'));
+
+document.querySelectorAll('.site-item').forEach(el=>el.addEventListener('click',()=>{ const url=el.getAttribute('data-url'); if(url) window.open(url,'_blank'); showToast(`🌐 외부 사이트로 이동합니다`); }));
+
+// 성과 보고서 모달
+const modal = document.getElementById('reportModal');
+document.getElementById('open-report-btn').addEventListener('click',()=>{
+    const kpi = AppStore.getKPI();
+    const rows = `
+        <h3 class="text-xl font-bold text-white mb-4">월간 성과 요약</h3>
+        <div class="space-y-4 bg-black/20 p-5 rounded-2xl border border-white/5">
+            <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                <span class="text-indigo-300 font-semibold"><i class="fas fa-file-signature mr-2"></i>계약 완료</span>
+                <span class="text-lg">${kpi.contract.current} / ${kpi.contract.target} <span class="text-xs text-gray-400 ml-1">(${Math.floor((kpi.contract.current/kpi.contract.target)*100)}%)</span></span>
+            </div>
+            <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                <span class="text-emerald-300 font-semibold"><i class="fas fa-comments mr-2"></i>상담 진행</span>
+                <span class="text-lg">${kpi.counseling.current} / ${kpi.counseling.target} <span class="text-xs text-gray-400 ml-1">(${Math.floor((kpi.counseling.current/kpi.counseling.target)*100)}%)</span></span>
+            </div>
+            <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                <span class="text-amber-300 font-semibold"><i class="fas fa-graduation-cap mr-2"></i>교육 이수</span>
+                <span class="text-lg">${kpi.training.current} / ${kpi.training.target} <span class="text-xs text-gray-400 ml-1">(${Math.floor((kpi.training.current/kpi.training.target)*100)}%)</span></span>
+            </div>
+            <div class="flex justify-between items-center pb-2">
+                <span class="text-purple-300 font-semibold"><i class="fas fa-star mr-2"></i>고객 유지</span>
+                <span class="text-lg">${kpi.retention.current} / ${kpi.retention.target} <span class="text-xs text-gray-400 ml-1">(${Math.floor((kpi.retention.current/kpi.retention.target)*100)}%)</span></span>
+            </div>
+        </div>
+        <div class="mt-4 p-4 bg-indigo-600/20 rounded-xl border border-indigo-500/30 text-right">
+            <span class="text-sm text-indigo-200 mr-3">종합 성과 달성률</span>
+            <span class="text-2xl font-black text-white">${Math.floor((kpi.contract.current+kpi.counseling.current+kpi.training.current+kpi.retention.current)/(kpi.contract.target+kpi.counseling.target+kpi.training.target+kpi.retention.target)*100)}%</span>
+        </div>`;
+    document.getElementById('reportDynamic').innerHTML = rows;
+    modal.classList.add('active');
+});
+document.getElementById('closeReportModal')?.addEventListener('click',()=>modal.classList.remove('active'));
+document.getElementById('printReportBtn')?.addEventListener('click',()=>{ window.print(); showToast("🖨️ 인쇄/PDF 대화상자를 엽니다"); });
+
+// 이벤트 핸들러
+document.getElementById('add-todo-quick')?.addEventListener('click',()=>{ let txt=prompt("새 할 일을 입력하세요 (예: 테스트 진행 #계약)"); if(txt) AppStore.addTodo(txt); showToast("📝 새 미션이 추가되었습니다."); });
+document.getElementById('clear-log-central')?.addEventListener('click',()=>{ document.getElementById('last-activity-log').innerText="로그가 초기화되었습니다."; showToast("🧹 로그 정리 완료"); });
+document.getElementById('prev-month-btn')?.addEventListener('click',()=>changeMonth(-1));
+document.getElementById('next-month-btn')?.addEventListener('click',()=>changeMonth(1));
+document.getElementById('prev-day-btn')?.addEventListener('click',()=>shiftDay(-1));
+document.getElementById('next-day-btn')?.addEventListener('click',()=>shiftDay(1));
+document.getElementById('today-btn')?.addEventListener('click',goToday);
+
+// 리치 에디터 디바운싱
+let _memoDeb;
+document.getElementById('rich-editor').addEventListener('input',()=>{ clearTimeout(_memoDeb); _memoDeb=setTimeout(saveCurrentMemo, 800); updateWordCount(); });
+
+document.getElementById('insert-tag-quick')?.addEventListener('click',()=>{ let tag=prompt("태그를 입력하세요 (예: #인사이트)","#인사이트"); if(tag) { document.execCommand('insertHTML',false,` <span class="tag-chip" contenteditable="false">${escapeHtml(tag)}</span> `); saveCurrentMemo(); }});
+document.getElementById('insert-template')?.addEventListener('click',()=>{ document.execCommand('insertHTML',false,'<h3 class="text-lg font-bold mt-2 border-b border-white/20 pb-1">📋 회의 템플릿</h3><ul class="list-disc pl-5 mt-2"><li><b>의제:</b> </li><li><b>액션 아이템:</b> </li></ul><p><br></p>'); saveCurrentMemo(); });
+document.querySelectorAll('[data-cmd]').forEach(btn=>btn.addEventListener('click',()=>{ document.execCommand(btn.getAttribute('data-cmd'),false,null); document.getElementById('rich-editor').focus(); saveCurrentMemo(); }));
+document.querySelectorAll('.tag-chip').forEach(ch=>ch.addEventListener('click',()=>{ document.execCommand('insertHTML',false,` ${ch.innerText} `); saveCurrentMemo(); }));
+
+// 초기화 실행
+AppStore.subscribe(renderGlobalUI);
+AppStore.init();
+renderCalendar();
+goToday(); // 항상 오늘 날짜로 시작하도록 수정
+
+const savedThemeLocal=localStorage.getItem('nexus_theme'); if(savedThemeLocal) setTheme(savedThemeLocal);
+showToast('✨ Aurora Nexus 시스템 구동 완료');
+</script>
+</body>
+</html>
